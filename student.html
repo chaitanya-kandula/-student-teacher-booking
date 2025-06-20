@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Panel</title>
+</head>
+<body>
+  <h2>Student Dashboard</h2>
+
+  <input type="text" id="teacherId" placeholder="Teacher ID">
+  <textarea id="message" placeholder="Purpose of Appointment"></textarea>
+  <button onclick="bookAppointment()">Book Appointment</button>
+
+  <h3>Your Appointments</h3>
+  <div id="appointments"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Fake login (replace with real login later)
+    auth.signInWithEmailAndPassword("student1@gmail.com", "password123").then(() => {
+      console.log("Student signed in");
+
+      function fetchAppointments() {
+        db.collection('appointments')
+          .where('studentId', '==', auth.currentUser.uid)
+          .onSnapshot(snapshot => {
+            const container = document.getElementById('appointments');
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              container.innerHTML += `<p>${data.teacherId}: ${data.status} – ${data.message}</p>`;
+            });
+          });
+      }
+
+      fetchAppointments();
+    });
+
+    function bookAppointment() {
+      const teacherId = document.getElementById('teacherId').value;
+      const message = document.getElementById('message').value;
+      db.collection('appointments').add({
+        studentId: auth.currentUser.uid,
+        teacherId,
+        message,
+        status: 'pending',
+        timestamp: new Date()
+      }).then(() => alert('Appointment requested!'));
+    }
+  </script>
+</body>
+</html>
+
+<!-- Inside student.html / teacher.html / admin.html -->
+<button onclick="logout()">Logout</button>
+
+<script>
+  function logout() {
+    firebase.auth().signOut().then(() => {
+      window.location.href = 'login.html';
+    });
+  }
+</script>
