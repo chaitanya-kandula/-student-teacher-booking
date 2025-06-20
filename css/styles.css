@@ -1,36 +1,49 @@
+/* General layout tweaks */
 body {
-  font-family: Arial, sans-serif;
-  padding: 2rem;
-}
-input, textarea {
-  display: block;
-  margin-bottom: 10px;
-  padding: 8px;
-  width: 300px;
-}
-button {
-  padding: 8px 16px;
-  background-color: #2c7;
-  border: none;
-  color: white;
-  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
 }
 
-button {
-  background-color: #4CAF50;   /* Green */
-  color: white;                /* Text color */
-  border: none;                /* No borders */
-  padding: 10px 20px;          /* Top-Bottom, Left-Right */
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  border-radius: 6px;          /* Rounded corners */
-  transition: background-color 0.3s ease;
-  cursor: pointer;
-  margin: 5px;
+/* Card spacing */
+.card {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
 }
 
-button:hover {
-  background-color: #388e3c;   /* Darker green on hover */
+/* Custom button hover */
+button:hover, .btn:hover {
+  transform: scale(1.02);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Responsive spacing */
+.container {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+/* Center form cards */
+.card.mx-auto {
+  margin-top: 50px;
+}
+
+/* Make navbar brand bold */
+.navbar-brand {
+  font-weight: bold;
+}
+
+/* Appointment badge padding */
+.badge {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+/* Text area resize control */
+textarea {
+  resize: none;
+}
+
+/* Admin teacher list cards */
+#teacherList .card {
+  background-color: #fffbe6;
 }

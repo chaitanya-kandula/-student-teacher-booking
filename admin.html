@@ -1,31 +1,57 @@
 <!DOCTYPE html>
 <html>
-<head><title>Admin Panel</title></head>
+<head>
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
 <body>
-  <h2>Admin Dashboard</h2>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-warning">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="index.html">Booking App</a>
+      <button class="btn btn-outline-dark" onclick="logout()">Logout</button>
+    </div>
+  </nav>
 
-  <input id="teacherName" placeholder="Teacher Name">
-  <input id="department" placeholder="Department">
-  <button onclick="addTeacher()">Add Teacher</button>
+  <div class="container mt-4">
+    <h2 class="text-center text-warning">Admin Panel - Manage Teachers</h2>
 
-  <h3>All Teachers</h3>
-  <div id="teacherList"></div>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title">Add New Teacher</h5>
+        <div class="mb-3">
+          <input id="teacherName" class="form-control" placeholder="Teacher Name">
+        </div>
+        <div class="mb-3">
+          <input id="department" class="form-control" placeholder="Department">
+        </div>
+        <button class="btn btn-success" onclick="addTeacher()">Add Teacher</button>
+      </div>
+    </div>
+
+    <h4 class="mt-5">Teacher List</h4>
+    <div id="teacherList" class="mt-3"></div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-config.js"></script>
   <script>
-    // Fake login
-    auth.signInWithEmailAndPassword("admin@gmail.com", "admin123").then(() => {
-      console.log("Admin signed in");
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = 'login.html';
     });
 
     function addTeacher() {
+      const name = document.getElementById('teacherName').value;
+      const department = document.getElementById('department').value;
       db.collection('users').add({
-        name: document.getElementById('teacherName').value,
-        department: document.getElementById('department').value,
+        name,
+        department,
         role: 'teacher'
+      }).then(() => {
+        alert('Teacher added successfully!');
+        document.getElementById('teacherName').value = '';
+        document.getElementById('department').value = '';
       });
     }
 
@@ -34,20 +60,13 @@
       list.innerHTML = '';
       snapshot.forEach(doc => {
         const data = doc.data();
-        list.innerHTML += `<p>${data.name} – ${data.department}</p>`;
+        list.innerHTML += `<div class="card mt-2"><div class="card-body">${data.name} - ${data.department}</div></div>`;
       });
     });
+
+    function logout() {
+      auth.signOut().then(() => window.location.href = 'login.html');
+    }
   </script>
 </body>
 </html>
-
-<!-- Inside student.html / teacher.html / admin.html -->
-<button onclick="logout()">Logout</button>
-
-<script>
-  function logout() {
-    firebase.auth().signOut().then(() => {
-      window.location.href = 'login.html';
-    });
-  }
-</script>
