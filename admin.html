@@ -11,27 +11,19 @@
       <button class="btn btn-outline-dark" onclick="logout()">Logout</button>
     </div>
   </nav>
-
   <div class="container mt-4">
     <h2 class="text-center text-warning">Admin Panel - Manage Teachers</h2>
-
     <div class="card mt-4">
       <div class="card-body">
         <h5 class="card-title">Add New Teacher</h5>
-        <div class="mb-3">
-          <input id="teacherName" class="form-control" placeholder="Teacher Name">
-        </div>
-        <div class="mb-3">
-          <input id="department" class="form-control" placeholder="Department">
-        </div>
+        <input id="teacherName" class="form-control mb-2" placeholder="Teacher Name">
+        <input id="department" class="form-control mb-2" placeholder="Department">
         <button class="btn btn-success" onclick="addTeacher()">Add Teacher</button>
       </div>
     </div>
-
     <h4 class="mt-5">Teacher List</h4>
     <div id="teacherList" class="mt-3"></div>
   </div>
-
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -42,8 +34,12 @@
     });
 
     function addTeacher() {
-      const name = document.getElementById('teacherName').value;
-      const department = document.getElementById('department').value;
+      const name = document.getElementById('teacherName').value.trim();
+      const department = document.getElementById('department').value.trim();
+      if (!name || !department) {
+        alert('Please fill in all fields.');
+        return;
+      }
       db.collection('users').add({
         name,
         department,
@@ -55,12 +51,31 @@
       });
     }
 
+    function deleteTeacher(id) {
+      db.collection('users').doc(id).delete().then(() => alert('Teacher deleted.'));
+    }
+
+    function updateTeacher(id, currentName, currentDept) {
+      const newName = prompt('Enter new name', currentName);
+      const newDept = prompt('Enter new department', currentDept);
+      if (newName && newDept) {
+        db.collection('users').doc(id).update({ name: newName, department: newDept });
+      }
+    }
+
     db.collection('users').where('role', '==', 'teacher').onSnapshot(snapshot => {
       const list = document.getElementById('teacherList');
       list.innerHTML = '';
       snapshot.forEach(doc => {
         const data = doc.data();
-        list.innerHTML += `<div class="card mt-2"><div class="card-body">${data.name} - ${data.department}</div></div>`;
+        list.innerHTML += `
+          <div class="card mt-2">
+            <div class="card-body">
+              <strong>${data.name}</strong> - ${data.department}
+              <button class="btn btn-sm btn-warning ms-2" onclick="updateTeacher('${doc.id}', '${data.name}', '${data.department}')">Update</button>
+              <button class="btn btn-sm btn-danger ms-2" onclick="deleteTeacher('${doc.id}')">Delete</button>
+            </div>
+          </div>`;
       });
     });
 

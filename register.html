@@ -21,7 +21,6 @@
       </div>
     </div>
   </div>
-
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -31,10 +30,8 @@
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const role = document.getElementById('role').value;
-
       auth.createUserWithEmailAndPassword(email, password).then(userCred => {
-        const uid = userCred.user.uid;
-        return db.collection('users').doc(uid).set({ email, role });
+        return db.collection('users').doc(userCred.user.uid).set({ email, role });
       }).then(() => {
         alert('Registered successfully!');
         window.location.href = 'login.html';

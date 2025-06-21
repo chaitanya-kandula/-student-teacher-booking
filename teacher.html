@@ -48,6 +48,18 @@
     function accept(id) {
       db.collection('appointments').doc(id).update({ status: 'accepted' });
     }
+    function replyToStudent(studentId, messageText) {
+  db.collection('messages').add({
+    from: auth.currentUser.uid,
+    to: studentId,
+    message: messageText,
+    timestamp: Date.now()
+  });
+}
+<!-- Add simple message box inside card-body -->
+<input type="text" id="reply-${doc.id}" class="form-control mb-2" placeholder="Reply">
+<button class="btn btn-sm btn-secondary" onclick="replyToStudent('${data.studentId}', document.getElementById('reply-${doc.id}').value)">Send Reply</button>
+
 
     function logout() {
       auth.signOut().then(() => window.location.href = 'login.html');
