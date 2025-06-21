@@ -17,52 +17,81 @@
     <div id="requests" class="mt-4"></div>
   </div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="js/firebase-config.js"></script>
+
   <script>
     auth.onAuthStateChanged(user => {
       if (user) {
-        db.collection('appointments')
-          .where('teacherId', '==', user.uid)
+        console.log("✅ Logged in teacher UID:", user.uid);
+
+        db.collection("appointments")
+          .where("teacherId", "==", user.uid)
           .onSnapshot(snapshot => {
-            const container = document.getElementById('requests');
-            container.innerHTML = '';
+            const container = document.getElementById("requests");
+            container.innerHTML = "";
+
+            if (snapshot.empty) {
+              container.innerHTML = "<p class='text-muted'>No appointments found.</p>";
+              console.log("ℹ️ No appointments for this teacher.");
+              return;
+            }
+
             snapshot.forEach(doc => {
               const data = doc.data();
+              console.log("📩 Appointment loaded:", data);
+
               container.innerHTML += `
                 <div class="card mb-3">
                   <div class="card-body">
-                    <h5 class="card-title">From: Student</h5>
-                    <p class="card-text">Message: ${data.message}</p>
-                    <p>Status: <span class="badge bg-${data.status === 'accepted' ? 'success' : 'warning'}">${data.status}</span></p>
-                    ${data.status === 'pending' ? `<button class="btn btn-primary" onclick="accept('${doc.id}')">Accept</button>` : ''}
+                    <h5>From: Student</h5>
+                    <p>Message: ${data.message}</p>
+                    <p>Status: 
+                      <span class="badge bg-${data.status === "accepted" ? "success" : data.status === "cancelled" ? "danger" : "warning"}">
+                        ${data.status}
+                      </span>
+                    </p>
+                    ${data.status === "pending" ? `<button class="btn btn-primary" onclick="accept('${doc.id}')">Accept</button>` : ""}
+                    <input type="text" id="reply-${doc.id}" class="form-control mt-2" placeholder="Reply">
+                    <button class="btn btn-secondary btn-sm mt-1" onclick="replyToStudent('${data.studentId}', document.getElementById('reply-${doc.id}').value)">Send Reply</button>
                   </div>
                 </div>`;
             });
           });
+      } else {
+        console.warn("User not authenticated. Redirecting to login...");
+        window.location.href = "login.html";
       }
     });
 
     function accept(id) {
-      db.collection('appointments').doc(id).update({ status: 'accepted' });
+      db.collection("appointments").doc(id).update({
+        status: "accepted"
+      }).then(() => console.log("✅ Appointment accepted:", id));
     }
-    function replyToStudent(studentId, messageText) {
-  db.collection('messages').add({
-    from: auth.currentUser.uid,
-    to: studentId,
-    message: messageText,
-    timestamp: Date.now()
-  });
-}
-<!-- Add simple message box inside card-body -->
-<input type="text" id="reply-${doc.id}" class="form-control mb-2" placeholder="Reply">
-<button class="btn btn-sm btn-secondary" onclick="replyToStudent('${data.studentId}', document.getElementById('reply-${doc.id}').value)">Send Reply</button>
 
+    function replyToStudent(studentId, messageText) {
+      if (!messageText.trim()) {
+        alert("Please enter a message.");
+        return;
+      }
+
+      db.collection("messages").add({
+        from: auth.currentUser.uid,
+        to: studentId,
+        message: messageText.trim(),
+        timestamp: Date.now()
+      }).then(() => {
+        alert("Reply sent!");
+        console.log("✉️ Message sent to student:", studentId);
+      });
+    }
 
     function logout() {
-      auth.signOut().then(() => window.location.href = 'login.html');
+      auth.signOut().then(() => window.location.href = "login.html");
     }
   </script>
 </body>
