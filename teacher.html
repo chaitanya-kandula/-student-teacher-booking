@@ -26,31 +26,32 @@
   <script>
     auth.onAuthStateChanged(user => {
       if (user) {
-        console.log("✅ Logged in teacher UID:", user.uid);
+        const uid = user.uid;
+        console.log("✅ Logged in teacher UID:", uid);
 
         db.collection("appointments")
-          .where("teacherId", "==", user.uid)
+          .where("teacherId", "==", uid)
           .onSnapshot(snapshot => {
             const container = document.getElementById("requests");
             container.innerHTML = "";
 
             if (snapshot.empty) {
-              container.innerHTML = "<p class='text-muted'>No appointments found.</p>";
-              console.log("ℹ️ No appointments for this teacher.");
+              console.warn("⚠️ No appointments found for this teacher.");
+              container.innerHTML = "<p class='text-muted'>No appointments yet.</p>";
               return;
             }
 
             snapshot.forEach(doc => {
               const data = doc.data();
-              console.log("📩 Appointment loaded:", data);
+              console.log("📩 Appointment found:", data);
 
               container.innerHTML += `
                 <div class="card mb-3">
                   <div class="card-body">
-                    <h5>From: Student</h5>
+                    <h5>From: ${data.studentId}</h5>
                     <p>Message: ${data.message}</p>
                     <p>Status: 
-                      <span class="badge bg-${data.status === "accepted" ? "success" : data.status === "cancelled" ? "danger" : "warning"}">
+                      <span class="badge bg-${data.status === 'accepted' ? 'success' : data.status === 'cancelled' ? 'danger' : 'warning'}">
                         ${data.status}
                       </span>
                     </p>
@@ -62,7 +63,7 @@
             });
           });
       } else {
-        console.warn("User not authenticated. Redirecting to login...");
+        console.warn("❌ User not authenticated. Redirecting...");
         window.location.href = "login.html";
       }
     });
@@ -70,12 +71,14 @@
     function accept(id) {
       db.collection("appointments").doc(id).update({
         status: "accepted"
-      }).then(() => console.log("✅ Appointment accepted:", id));
+      }).then(() => {
+        console.log("✅ Appointment accepted:", id);
+      });
     }
 
     function replyToStudent(studentId, messageText) {
       if (!messageText.trim()) {
-        alert("Please enter a message.");
+        alert("Please enter a message before sending.");
         return;
       }
 
@@ -86,7 +89,7 @@
         timestamp: Date.now()
       }).then(() => {
         alert("Reply sent!");
-        console.log("✉️ Message sent to student:", studentId);
+        console.log("✉️ Reply sent to student:", studentId);
       });
     }
 
