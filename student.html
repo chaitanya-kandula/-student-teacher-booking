@@ -48,9 +48,21 @@
   <script src="js/firebase-config.js"></script>
 
   <script>
-    // Load current student's appointments
+    // Load teacher dropdown
     auth.onAuthStateChanged(user => {
       if (user) {
+        // Populate teacher dropdown
+        db.collection('users').where('role', '==', 'teacher').get().then(snapshot => {
+          const teacherSelect = document.getElementById('teacherId');
+          snapshot.forEach(doc => {
+            const teacher = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id; // ✅ real UID
+            option.textContent = `${teacher.name} (${teacher.department})`;
+            teacherSelect.appendChild(option);
+          });
+        });
+
         // Load student's own appointments
         db.collection('appointments')
           .where('studentId', '==', user.uid)
@@ -62,7 +74,7 @@
               container.innerHTML += `
                 <div class="card mb-2">
                   <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Teacher ID: ${data.teacherId}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">Teacher UID: ${data.teacherId}</h6>
                     <p class="card-text">Message: ${data.message}</p>
                     <span class="badge bg-${data.status === 'accepted' ? 'success' : data.status === 'cancelled' ? 'danger' : 'warning'}">${data.status}</span>
                     ${data.status === 'pending' ? `<button class="btn btn-danger mt-2" onclick="cancelAppointment('${doc.id}')">Cancel</button>` : ''}
@@ -70,18 +82,8 @@
                 </div>`;
             });
           });
-
-        // Load teacher list into dropdown
-        db.collection('users').where('role', '==', 'teacher').get().then(snapshot => {
-          const teacherSelect = document.getElementById('teacherId');
-          snapshot.forEach(doc => {
-            const teacher = doc.data();
-            const option = document.createElement('option');
-            option.value = doc.id; // Firebase UID
-            option.textContent = `${teacher.name} (${teacher.department})`;
-            teacherSelect.appendChild(option);
-          });
-        });
+      } else {
+        window.location.href = "login.html";
       }
     });
 
@@ -97,7 +99,7 @@
 
       const studentId = auth.currentUser.uid;
       db.collection("appointments").add({
-        teacherId,
+        teacherId,       // ✅ This is now a real UID
         studentId,
         message,
         status: "pending",
