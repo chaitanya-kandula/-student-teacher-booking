@@ -1,43 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>Student Dashboard</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .navbar-brand {
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+  </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="index.html">Booking App</a>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-4">
+    <a class="navbar-brand" href="index.html">📚 Booking App</a>
+    <div class="ms-auto">
       <button class="btn btn-outline-light" onclick="logout()">Logout</button>
     </div>
   </nav>
 
-  <div class="container mt-4">
-    <h2 class="text-center text-primary">Student Booking Panel</h2>
+  <!-- Main Container -->
+  <div class="container mt-5">
+    <h2 class="text-center text-primary">Welcome to Student Dashboard</h2>
 
     <!-- Booking Form -->
     <div class="card mt-4">
       <div class="card-body">
         <h5 class="card-title">Book a Teacher</h5>
-
-        <!-- Dropdown for real teachers -->
         <div class="mb-3">
           <select id="teacherId" class="form-select">
-            <option value="">-- Select a Teacher --</option>
+            <option value="">👨‍🏫 Select a Teacher</option>
           </select>
         </div>
-
-        <!-- Message -->
         <div class="mb-3">
-          <textarea id="message" class="form-control" rows="3" placeholder="Enter your message or topic"></textarea>
+          <textarea id="message" class="form-control" rows="3" placeholder="Enter topic or reason"></textarea>
         </div>
-
-        <button class="btn btn-success" onclick="bookAppointment()">Submit Booking</button>
+        <button class="btn btn-success w-100" onclick="bookAppointment()">📅 Submit Booking</button>
       </div>
     </div>
 
-    <!-- Bookings List -->
-    <h4 class="mt-5">Your Appointments</h4>
+    <!-- Appointments Section -->
+    <h4 class="mt-5">📌 Your Appointments</h4>
     <div id="appointments" class="mt-3"></div>
   </div>
 
@@ -48,36 +52,48 @@
   <script src="js/firebase-config.js"></script>
 
   <script>
-    // Load teacher dropdown
+    const teacherMap = {};
+
     auth.onAuthStateChanged(user => {
       if (user) {
-        // Populate teacher dropdown
+        // Load all teachers into dropdown and memory map
         db.collection('users').where('role', '==', 'teacher').get().then(snapshot => {
           const teacherSelect = document.getElementById('teacherId');
           snapshot.forEach(doc => {
-            const teacher = doc.data();
+            const data = doc.data();
+            teacherMap[doc.id] = data.name;
             const option = document.createElement('option');
-            option.value = doc.id; // ✅ real UID
-            option.textContent = `${teacher.name} (${teacher.department})`;
+            option.value = doc.id;
+            option.textContent = `${data.name} (${data.department})`;
             teacherSelect.appendChild(option);
           });
         });
 
-        // Load student's own appointments
+        // Load appointments
         db.collection('appointments')
           .where('studentId', '==', user.uid)
+          .orderBy('timestamp', 'desc')
           .onSnapshot(snapshot => {
             const container = document.getElementById('appointments');
             container.innerHTML = '';
+            if (snapshot.empty) {
+              container.innerHTML = `<p class="text-muted">No appointments booked yet.</p>`;
+            }
             snapshot.forEach(doc => {
               const data = doc.data();
+              const teacherName = teacherMap[data.teacherId] || data.teacherId;
+              const statusColor =
+                data.status === 'accepted' ? 'success' :
+                data.status === 'cancelled' ? 'danger' : 'warning';
               container.innerHTML += `
-                <div class="card mb-2">
+                <div class="card mb-3 shadow-sm">
                   <div class="card-body">
-                    <h6 class="card-subtitle mb-2 text-muted">Teacher UID: ${data.teacherId}</h6>
-                    <p class="card-text">Message: ${data.message}</p>
-                    <span class="badge bg-${data.status === 'accepted' ? 'success' : data.status === 'cancelled' ? 'danger' : 'warning'}">${data.status}</span>
-                    ${data.status === 'pending' ? `<button class="btn btn-danger mt-2" onclick="cancelAppointment('${doc.id}')">Cancel</button>` : ''}
+                    <h6 class="card-subtitle mb-2 text-muted">👨‍🏫 ${teacherName}</h6>
+                    <p class="card-text">📝 ${data.message}</p>
+                    <span class="badge bg-${statusColor} text-capitalize">${data.status}</span>
+                    ${data.status === 'pending' ? `
+                      <button class="btn btn-outline-danger btn-sm float-end mt-2" onclick="cancelAppointment('${doc.id}')">Cancel</button>
+                    ` : ''}
                   </div>
                 </div>`;
             });
@@ -87,36 +103,32 @@
       }
     });
 
-    // Book an appointment
     function bookAppointment() {
       const teacherId = document.getElementById("teacherId").value;
       const message = document.getElementById("message").value.trim();
 
       if (!teacherId || !message) {
-        alert("Please select a teacher and enter your message.");
+        alert("Please select a teacher and enter a message.");
         return;
       }
 
-      const studentId = auth.currentUser.uid;
       db.collection("appointments").add({
-        teacherId,       // ✅ This is now a real UID
-        studentId,
+        teacherId,
+        studentId: auth.currentUser.uid,
         message,
         status: "pending",
         timestamp: Date.now()
       }).then(() => {
-        alert("Appointment booked!");
+        alert("✅ Appointment booked!");
         document.getElementById("teacherId").value = "";
         document.getElementById("message").value = "";
       });
     }
 
-    // Cancel a pending appointment
     function cancelAppointment(id) {
       db.collection("appointments").doc(id).update({ status: 'cancelled' });
     }
 
-    // Logout
     function logout() {
       auth.signOut().then(() => window.location.href = 'login.html');
     }
